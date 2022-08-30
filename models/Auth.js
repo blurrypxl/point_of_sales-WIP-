@@ -6,10 +6,10 @@ const Auth = function (obj) {
   this.objReq = obj;
 }
 
-Auth.prototype.login = function (funcReq) {
+Auth.prototype.login = function (funcMsg) {
   const findByValue = `SELECT * FROM akun WHERE email='${this.objReq.email}'`;
 
-  mysql.query(findByValue, funcReq);
+  mysql.query(findByValue, funcMsg);
 }
 
 Auth.prototype.createToken = function () {

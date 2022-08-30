@@ -19,7 +19,7 @@ Pegawai.prototype.findById = function (funcMsg) {
 }
 
 Pegawai.prototype.create = function (funcMsg) {
-  const create = `INSERT INTO pegawai (id_pegawai, nama_pegawai, email_pegawai, alamat_pegawai, jabatan, ditambah_oleh, diedit_oleh, create_at, update_at) VALUES ('${gUniqueId()}', '${this.objReq.nama_pegawai}', '${this.objReq.email_pegawai}', '${this.objReq.alamat_pegawai}', '${this.objReq.jabatan}', '${this.objReq.ditambah_oleh}', '', '${timestamp('HH:mm:YYYY-MM-DD')}', '${timestamp('HH:mm:YYYY-MM-DD')}')`;
+  const create = `INSERT INTO pegawai (id_pegawai, nama_pegawai, email_pegawai, alamat_pegawai, jabatan, ditambah_oleh, diedit_oleh, create_at, update_at) VALUES ('${gUniqueId({ 'length': 20 })}', '${this.objReq.nama_pegawai}', '${this.objReq.email_pegawai}', '${this.objReq.alamat_pegawai}', '${this.objReq.jabatan}', '${this.objReq.ditambah_oleh}', '', '${timestamp('HH:mm:YYYY-MM-DD')}', '${timestamp('HH:mm:YYYY-MM-DD')}')`;
 
   mysql.query(create, funcMsg);
 }
