@@ -1,61 +1,28 @@
 const mysql = require('../connector');
 const timestamp = require('time-stamp');
-const gUniqueId = require('generate-unique-id');
 const bcrypt = require('bcrypt');
 
 module.exports = {
-  findAll: function (response) {
+  findAll: function (resFunc) {
     const findAll = `SELECT * FROM master`;
 
-    mysql.query(findAll, response);
+    mysql.query(findAll, resFunc);
   },
-  findById: function (response) {
-    const findById = `SELECT * FROM master WHERE id_master='${this.objReq.id_master}'`;
+  findById: function (resFunc) {
+    const findById = `SELECT * FROM master WHERE id_master='${this.reqObj.id_master}'`;
 
-    mysql.query(findById, response);
+    mysql.query(findById, resFunc);
   },
-  create: function (objReq, response) {
-    const hashedPassword = bcrypt.hashSync(objReq.password, 8);
+  create: function (reqObj, resFunc) {
+    const hashedPassword = bcrypt.hashSync(reqObj.password, 8);
 
-    const create = `INSERT INTO master (id_master, nama_master, email_master, alamat_master, password, role, create_at, update_at) VALUES ('${gUniqueId({ 'length': 20 })}', '${objReq.nama_master}', '${objReq.email_master}', '${objReq.alamat_master}', '${hashedPassword}', '${objReq.role}', '${timestamp('HH:mm:YYYY-MM-DD')}', '')`;
+    const create = `INSERT INTO master (id_master, nama_master, email_master, alamat_master, password, role, create_at, update_at) VALUES ('${reqObj.id_master}', '${reqObj.nama_master}', '${reqObj.email_master}', '${reqObj.alamat_master}', '${hashedPassword}', '${reqObj.role}', '${timestamp('HH:mm:YYYY-MM-DD')}', '')`;
 
-    mysql.query(create, response);
+    mysql.query(create, resFunc);
   },
-  update: function (objReq, response) {
-    const update = `UPDATE master SET nama_master='${objReq.nama_master}', email_master='${objReq.email_master}', alamat_master='${objReq.alamat_master}', password='${objReq.password}', update_at='${timestamp('HH:mm:YYYY-MM-DD')}' WHERE id_master='${objReq.id_master}'`;
+  update: function (reqObj, resFunc) {
+    const update = `UPDATE master SET nama_master='${reqObj.nama_master}', email_master='${reqObj.email_master}', alamat_master='${reqObj.alamat_master}', password='${reqObj.password}', update_at='${timestamp('HH:mm:YYYY-MM-DD')}' WHERE id_master='${reqObj.id_master}'`;
 
-    mysql.query(update, response);
+    mysql.query(update, resFunc);
   }
 }
-
-// const Master = function (obj) {
-//   this.objReq = obj;
-// }
-
-// Master.prototype.findAll = function (response) {
-//   const findAll = `SELECT * FROM master`;
-
-//   mysql.query(findAll, response);
-// }
-
-// Master.prototype.findById = function (response) {
-//   const findById = `SELECT * FROM master WHERE id_master='${this.objReq.id_master}'`;
-
-//   mysql.query(findById, response);
-// }
-
-// Master.prototype.create = function (response) {
-//   const hashedPassword = bcrypt.hashSync(this.objReq.password, 8);
-
-//   const create = `INSERT INTO master (id_master, nama_master, email_master, alamat_master, password, role, create_at, update_at) VALUES ('${gUniqueId({ 'length': 20 })}', '${this.objReq.nama_master}', '${this.objReq.email_master}', '${this.objReq.alamat_master}', '${hashedPassword}', '${this.objReq.role}', '${timestamp('HH:mm:YYYY-MM-DD')}', '')`;
-
-//   mysql.query(create, response);
-// }
-
-// Master.prototype.update = function (response) {
-//   const update = `UPDATE master SET nama_master='${this.objReq.nama_master}', email_master='${this.objReq.email_master}', alamat_master='${this.objReq.alamat_master}', password='${this.objReq.password}', update_at='${timestamp('HH:mm:YYYY-MM-DD')}'`;
-
-//   mysql.query(update, response);
-// }
-
-// module.exports = Master;

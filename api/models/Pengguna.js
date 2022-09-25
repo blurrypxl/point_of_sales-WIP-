@@ -1,67 +1,30 @@
 const mysql = require('../connector');
-const gUniqueId = require('generate-unique-id');
 const timestamp = require('time-stamp');
 
 module.exports = {
-  findAll: function (res) {
+  findAll: function (resFunc) {
     const findAll = `SELECT * FROM pengguna`;
 
-    mysql.query(findAll, res);
+    mysql.query(findAll, resFunc);
   },
-  findById: function (req, res) {
-    const findById = `SELECT * FROM pengguna WHERE id_pengguna='${req.id_pengguna}'`;
+  findById: function (reqObj, resFunc) {
+    const findById = `SELECT * FROM pengguna WHERE id_pengguna='${reqObj.id_pengguna}'`;
 
-    mysql.query(findById, res);
+    mysql.query(findById, resFunc);
   },
-  create: function (req, res) {
-    const create = `INSERT INTO pengguna (id_pengguna, nama_pengguna, email_pengguna, alamat_pengguna, jabatan, ditambah_oleh, diedit_oleh, create_at, update_at) VALUES ('${gUniqueId({ 'length': 20 })}', '${req.nama_pengguna}', '${req.email_pengguna}', '${req.alamat_pengguna}', '${req.jabatan}', '${req.ditambah_oleh}', '', '${timestamp('HH:mm:YYYY-MM-DD')}', '')`;
+  create: function (reqObj, resFunc) {
+    const create = `INSERT INTO pengguna (id_pengguna, nama_pengguna, email_pengguna, alamat_pengguna, jabatan, ditambah_oleh, diedit_oleh, create_at, update_at) VALUES ('${reqObj.id_pengguna}', '${reqObj.nama_pengguna}', '${reqObj.email_pengguna}', '${reqObj.alamat_pengguna}', '${reqObj.jabatan}', '${reqObj.ditambah_oleh}', '', '${timestamp('HH:mm:YYYY-MM-DD')}', '')`;
 
-    mysql.query(create, res);
+    mysql.query(create, resFunc);
   },
-  update: function (req, res) {
-    const update = `UPDATE pengguna SET nama_pengguna='${req.nama_pengguna}', email_pengguna='${req.email_pengguna}', alamat_pengguna='${req.alamat_pengguna}', jabatan='${req.jabatan}', update_at='${timestamp('HH:mm:YYYY-MM-DD')}' WHERE id_pengguna='${req.id_pengguna}'`;
+  update: function (reqObj, resFunc) {
+    const update = `UPDATE pengguna SET nama_pengguna='${reqObj.nama_pengguna}', email_pengguna='${reqObj.email_pengguna}', alamat_pengguna='${reqObj.alamat_pengguna}', jabatan='${reqObj.jabatan}', update_at='${timestamp('HH:mm:YYYY-MM-DD')}' WHERE id_pengguna='${reqObj.id_pengguna}'`;
 
-    mysql.query(update, res);
+    mysql.query(update, resFunc);
   },
-  delete: function (req, res) {
-    const remove = `DELETE FROM pengguna WHERE id_pengguna='${this.objReq.id_pengguna}'`;
+  delete: function (reqObj, resFunc) {
+    const remove = `DELETE FROM pengguna WHERE id_pengguna='${reqObj.id_pengguna}'`;
 
-    mysql.query(remove, res);
+    mysql.query(remove, resFunc);
   }
 }
-
-// const Pengguna = function (obj) {
-//   this.objReq = obj;
-// }
-
-// Pengguna.prototype.findAll = function (response) {
-//   const findAll = `SELECT * FROM pengguna`;
-
-//   mysql.query(findAll, response);
-// }
-
-// Pengguna.prototype.findById = function (response) {
-//   const findById = `SELECT * FROM pengguna WHERE id_pengguna='${this.objReq.id_pengguna}'`;
-
-//   mysql.query(findById, response);
-// }
-
-// Pengguna.prototype.create = function (response) {
-//   const create = `INSERT INTO pengguna (id_pengguna, nama_pengguna, email_pengguna, alamat_pengguna, jabatan, ditambah_oleh, diedit_oleh, create_at, update_at) VALUES ('${gUniqueId({ 'length': 20 })}', '${this.objReq.nama_pengguna}', '${this.objReq.email_pengguna}', '${this.objReq.alamat_pengguna}', '${this.objReq.jabatan}', '${this.objReq.ditambah_oleh}', '', '${timestamp('HH:mm:YYYY-MM-DD')}', '')`;
-
-//   mysql.query(create, response);
-// }
-
-// Pengguna.prototype.update = function (response) {
-//   const update = `UPDATE pengguna SET nama_pengguna='${this.objReq.nama_pengguna}', email_pengguna='${this.objReq.email_pengguna}', alamat_pengguna='${this.objReq.alamat_pengguna}', jabatan='${this.objReq.jabatan}', update_at='${timestamp('HH:mm:YYYY-MM-DD')}' WHERE id_pengguna='${this.objReq.id_pengguna}'`;
-
-//   mysql.query(update, response);
-// }
-
-// Pengguna.prototype.remove = function (response) {
-//   const remove = `DELETE FROM pengguna WHERE id_pengguna='${this.objReq.id_pengguna}'`;
-
-//   mysql.query(remove, response);
-// }
-
-// module.exports = Pengguna;

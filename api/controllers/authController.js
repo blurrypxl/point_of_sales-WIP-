@@ -1,18 +1,36 @@
-const router = require('express').Router();
+const Router = require('express').Router();
 const bcrypt = require('bcrypt');
 const Auth = require('../models/Auth');
 require('dotenv').config();
 
-router.post('/login-master',
-  function (req, res) {
+Router.post('/login-master',
+  function (req, res, next) {
     Auth.loginMaster({ 'email_master': req.body.email_master }, function (err, data) {
-      if (err) return res.status(500).json({ 'status': 500, 'msg': err });
+      if (err) {
+        const error = new Error(err.message);
 
-      if (data.length === 0) return res.status(400).json({ 'status': 400, 'msg': 'Account not found' });
+        error.status = 500;
+  
+        return next(error);
+      }
+
+      if (data.length === 0) {
+        const error = new Error('Account Not Found');
+
+        error.status = 400;
+  
+        return next(error);
+      }
 
       const validatePassword = bcrypt.compareSync(req.body.password, data[0].password);
 
-      if (!validatePassword) return res.status(401).json({ 'status': 401, 'auth': false, 'token': null });
+      if (!validatePassword) {
+        const error = new Error({ 'auth': false, 'token': null });
+
+        error.status = 401;
+  
+        return next(error);
+      }
 
       const token = Auth.createToken({
         'payload': {
@@ -27,16 +45,34 @@ router.post('/login-master',
     });
   });
 
-router.post('/login',
-  function (req, res) {
+Router.post('/login',
+  function (req, res, next) {
     Auth.login({ 'email_pengguna': req.body.email_pengguna }, function (err, data) {
-      if (err) return res.status(500).json({ 'status': 500, 'msg': err });
+      if (err) {
+        const error = new Error(err.message);
 
-      if (data.length === 0) return res.status(400).json({ 'status': 400, 'msg': 'Account not found' });
+        error.status = 500;
+  
+        return next(error);
+      }
+
+      if (data.length === 0) {
+        const error = new Error('Account Not Found');
+
+        error.status = 400;
+  
+        return next(error);
+      }
 
       const validatePassword = bcrypt.compareSync(req.body.password, data[0].password);
 
-      if (!validatePassword) return res.status(401).json({ 'status': 401, 'auth': false, 'token': null });
+      if (!validatePassword) {
+        const error = new Error({ 'auth': false, 'token': null });
+
+        error.status = 401;
+  
+        return next(error);
+      }
 
       const token = Auth.createToken({
         'payload': {
@@ -51,4 +87,4 @@ router.post('/login',
     });
   });
 
-module.exports = router;
+module.exports = Router;

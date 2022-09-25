@@ -1,100 +1,162 @@
-const router = require('express').Router();
+const Router = require('express').Router();
+const GenerateId = require('generate-unique-id');
 const Pengguna = require('../models/Pengguna');
 const Auth = require('../models/Auth');
-// const validateToken = require('./validateController');
 
-const validateToken = function (request, response, next) {
-  Auth.validateToken({ 'token': request.headers['x-access-token'] }, function (err, decoded) {
-    if (err) return response.status(400).json({ 'status': 400, 'access': false, 'msg': err.message });
+Router.get('/read',
+  Auth.validateToken,
+  function (req, res, next) {
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied!');
 
-    if (decoded.payload.role !== 'super-admin') return response.status(401).json({ 'status': 401, 'access': false, 'msg': 'Access Denied!' });
+      error.status = 401;
 
-    response.locals.master = decoded.payload;
-  });
+      return next(error);
+    }
 
-  next();
-}
-
-router.get('/',
-  validateToken,
-  function (response) {
     Pengguna.findAll(function (err, data) {
-      if (err) return response.status(500).json({ 'status': 500, 'msg': err.message });
+      if (err) {
+        const error = new Error(err.message);
 
-      response.status(200).json({ 'status': 200, 'msg': data });
+        error.status = 500;
+
+        return next(error);
+      }
+
+      res.status(200).json({ 'status': 200, 'msg': data });
     });
   });
 
-router.get('/:id',
-  validateToken,
-  function (request, response) {
-    Pengguna.findById({ 'id_pengguna': request.params.id }, function (err, data) {
-      if (err) return response.status(500).json({ 'status': 500, 'msg': err.message });
+Router.get('/read/:id',
+  Auth.validateToken,
+  function (req, res, next) {
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied!');
 
-      response.status(200).json({ 'status': 200, 'access': true, 'msg': data });
-    });
-  });
+      error.status = 401;
 
-router.post('/create',
-  validateToken,
-  function (request, response) {
-    const dataMaster = response.locals.master;
+      return next(error);
+    }
 
-    Pengguna.create({
-      'nama_pengguna': request.body.nama_pengguna,
-      'email_pengguna': request.body.email_pengguna,
-      'alamat_pengguna': request.body.alamat_pengguna,
-      'jabatan': request.body.jabatan,
-      'ditambah_oleh': dataMaster.nama_master
-    },
-      function (err) {
-        if (err) return response.status(500).json({ 'status': 500, 'msg': err.message });
+    Pengguna.findById({ 'id_pengguna': req.params.id },
+      function (err, data) {
+        if (err) {
+          const error = new Error(err.message);
 
-        response.status(200).json({ 'status': 200, 'access': true, 'msg': 'Data pengguna berhasil ditambah.' });
+          error.status = 500;
+
+          return next(error);
+        }
+
+        res.status(200).json({ 'status': 200, 'msg': data });
       });
   });
 
-router.put('update/:id',
-  validateToken,
-  function (request, response, next) {
-    // Get data pengguna by id
-    Pengguna.findById({ id_pengguna: request.params.id }, function (err, data) {
-      if (err) return response.status(500).json({ 'status': 500, 'msg': err.message });
+Router.post('/create',
+  Auth.validateToken,
+  function (req, res, next) {
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied!');
 
-      response.locals.dataPengguna = data[0];
+      error.status = 401;
+
+      return next(error);
+    }
+
+    Pengguna.create({
+      'id_pengguna': GenerateId({ length: 20 }),
+      'nama_pengguna': req.body.nama_pengguna,
+      'email_pengguna': req.body.email_pengguna,
+      'alamat_pengguna': req.body.alamat_pengguna,
+      'jabatan': req.body.jabatan,
+      'ditambah_oleh': res.locals.user.nama_master
+    },
+      function (err) {
+        if (err) {
+          const error = new Error(err.message);
+
+          error.status = 500;
+
+          return next(error);
+        }
+
+        res.status(200).json({ 'status': 200, 'msg': 'Data pengguna berhasil ditambah.' });
+      });
+  });
+
+Router.put('/update/:id',
+  Auth.validateToken,
+  function (req, res, next) {
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied!');
+
+      error.status = 401;
+
+      return next(error);
+    }
+
+    // Get data pengguna by id
+    Pengguna.findById({ id_pengguna: req.params.id }, function (err, data) {
+      if (err) {
+        const error = new Error(err.message);
+
+        error.status = 500;
+
+        return next(error);
+      }
+
+      res.locals.dataPengguna = data[0];
     });
 
     next();
   }),
-  function (request, response) {
-    // Update data pengguna
-    const dataMaster = response.locals.dataMaster;
-    const datapengguna = response.locals.dataPengguna;
+  function (req, res) {
+    const datapengguna = res.locals.dataPengguna;
 
+    // Update data pengguna
     Pengguna.update({
-      'nama_pengguna': request.body.nama_pengguna === '' ? datapengguna.nama_pengguna : request.body.nama_pengguna,
-      'email_pengguna': request.body.email_pengguna === '' ? datapengguna.email_pengguna : request.body.email_pengguna,
-      'alamat_pengguna': request.body.alamat_pengguna === '' ? datapengguna.alamat_pengguna : request.body.alamat_pengguna,
-      'jabatan': request.body.jabatan === '' ? datapengguna.jabatan : request.body.jabatan,
-      'diedit_oleh': dataMaster.nama_master
+      'nama_pengguna': req.body.nama_pengguna === '' ? datapengguna.nama_pengguna : req.body.nama_pengguna,
+      'email_pengguna': req.body.email_pengguna === '' ? datapengguna.email_pengguna : req.body.email_pengguna,
+      'alamat_pengguna': req.body.alamat_pengguna === '' ? datapengguna.alamat_pengguna : req.body.alamat_pengguna,
+      'jabatan': req.body.jabatan === '' ? datapengguna.jabatan : req.body.jabatan,
+      'diedit_oleh': res.locals.user.nama_master
     },
       function (err) {
-        if (err) return response.status(500).json({ 'status': 500, 'msg': err.message });
+        if (err) {
+          const error = new Error(err.message);
 
-        response.status(200).json({ 'status': 200, 'access': true, 'msg': 'Data pengguna berhasil diupdate.' });
+          error.status = 500;
+
+          return next(error);
+        }
+
+        res.status(200).json({ 'status': 200, 'msg': 'Data pengguna berhasil diupdate.' });
       });
   };
 
-router.delete('/delete-pengguna/:id',
-  validateToken,
-  function (request, response) {
-    const pengguna = new Pengguna({ 'id_pengguna': request.params.id });
+Router.delete('/delete/:id',
+  Auth.validateToken,
+  function (req, res, next) {
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied!');
 
-    pengguna.remove(function (err) {
-      if (err) return response.status(500).json({ 'status': 500, 'msg': err.message });
+      error.status = 401;
 
-      response.status(200).json({ 'status': 200, 'access': true, 'msg': 'Data pelanggan berhasil dihapus.' });
-    });
+      return next(error);
+    }
+    
+    Pengguna.remove({ 'id_pengguna': req.params.id },
+      function (err) {
+        if (err) {
+          const error = new Error(err.message);
+
+          error.status = 500;
+
+          return next(error);
+        }
+
+        res.status(200).json({ 'status': 200, 'access': true, 'msg': 'Data pelanggan berhasil dihapus.' });
+      });
   });
 
-module.exports = router;
+module.exports = Router;

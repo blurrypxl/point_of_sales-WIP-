@@ -1,87 +1,146 @@
-const router = require('express').Router();
+const Router = require('express').Router();
+const GenerateId = require('generate-unique-id');
 const Menu = require('../models/Menu');
 const Auth = require('../models/Auth');
 
-const validateToken = function (req, res, next) {
-  Auth.validateToken({ token: req.headers['x-access-token'] }, function (err, decoded) {
-    if (err) return res.status(500).json({ 'status': 500, 'msg': err.message });
+Router.get('/read',
+  Auth.validateToken,
+  function (req, res, next) {
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied!');
 
-    if (decoded.payload.role !== 'super-admin') return res.status(401).json({ 'status': 401, 'access': false, 'msg': 'Access Denied' });
+      error.status = 500;
 
-    res.locals.user = decoded.payload;
-  });
+      return next(error);
+    }
 
-  next();
-}
-
-router.get('/',
-  validateToken,
-  function (req, res) {
     Menu.findAll(function (err, data) {
-      if (err) return res.status(500).json({ 'status': 500, 'msg': err.message });
+      if (err) {
+        const error = new Error(err.message);
+
+        error.status = 500;
+
+        return next(error);
+      }
 
       res.status(200).json(data);
     });
   });
 
-router.post('/create',
-  validateToken,
-  function (req, res) {
-    const dataUser = res.locals.user;
+Router.post('/create',
+  Auth.validateToken,
+  function (req, res, next) {
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied!');
+
+      error.status = 401;
+
+      return next(error);
+    }
 
     Menu.create({
-      'id_pengguna': dataUser.id_pengguna,
+      'id_menu': GenerateId({ length: 20 }),
+      'id_master': res.locals.user.id_master,
       'nama_menu': req.body.nama_menu,
       'jenis_menu': req.body.jenis_menu,
       'qty_menu': req.body.qty_menu,
       'harga_menu': req.body.harga_menu,
-      'ditambah_oleh': dataUser.nama_pengguna
+      'ditambah_oleh': res.locals.user.nama_master
     },
       function (err) {
-        if (err) return res.status(500).json({ 'status': 500, 'msg': err.message });
+        if (err) {
+          const error = new Error(err.message);
+
+          error.status = 500;
+
+          return next(error);
+        }
 
         res.status(200).json({ 'status': 200, 'msg': 'Data Menu berhasil ditambah.' });
       });
   });
 
-router.put('/update/:id',
-  validateToken,
+Router.put('/update/:id',
+  Auth.validateToken,
   function (req, res, next) {
-    Menu.findById({ 'id_menu': req.params.id }, function (err, data) {
-      if (err) return res.status(500).json({ 'status': 500, 'msg': err.message });
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied!');
 
-      res.locals.menu = data;
-    });
+      error.status = 401;
 
-    next();
+      return next(error);
+    }
+
+    // console.log(req.params.id);
+
+    Menu.findById({ 'id_menu': req.params.id },
+      function (err, data) {
+        if (err) {
+          const error = new Error(err.message);
+
+          error.status = 500;
+
+          return next(error);
+        }
+
+        // console.log(data[0]);
+
+        res.locals.menu = data[0];
+
+        next();
+      });
   },
-  function (req, res) {
-    const dataUser = res.locals.user;
+  function (req, res, next) {
     const dataMenu = res.locals.menu;
 
+    // console.log(dataMenu);
+    // console.log(req.body);
+
     Menu.update({
-      'nama_user': dataUser.nama_pengguna,
+      'nama_user': res.locals.user.nama_pengguna,
       'nama_menu': req.body.nama_menu === '' ? dataMenu.nama_menu : req.body.nama_menu,
       'jenis_menu': req.body.jenis_menu === '' ? dataMenu.jenis_menu : req.body.jenis_menu,
       'qty_menu': req.body.qty_menu === '' ? dataMenu.qty_menu : req.body.qty_menu,
-      'harga_menu': req.body.harga_menu === '' ? dataMenu.harga_menu : req.body.harga_menu
+      'harga_menu': req.body.harga_menu === '' ? dataMenu.harga_menu : req.body.harga_menu,
+      'diedit_oleh': res.locals.user.nama_master
     },
       function (err) {
-        if (err) return res.status(500).json({ 'status': 500, 'msg': err.message });
+        if (err) {
+          const error = new Error(err.message);
+
+          error.status = 500;
+
+          return next(error);
+        }
 
         res.status(200).json({ 'status': 200, 'msg': 'Data Menu berhasil diedit.' });
       });
   });
 
-router.delete('/delete/:id',
-  validateToken,
+Router.delete('/delete/:id',
+  Auth.validateToken,
   function (req, res) {
-    Menu.delete({ 'id_menu': req.params.id }, function (err) {
-      if (err) return res.status(500).json({ 'status': 500, 'msg': err.message });
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied!');
 
-      res.status(200).json({ 'status': 200, 'msg': 'Data Menu berhasil dihapus.' });
-    });
+      error.status = 401;
+
+      return next(error);
+    }
+
+    Menu.delete({ 'id_menu': req.params.id },
+      function (err) {
+        if (err) {
+          const error = new Error(err.message);
+
+          error.status = 500;
+
+          return next(error);
+        }
+
+        res.status(200).json({ 'status': 200, 'msg': 'Data Menu berhasil dihapus.' });
+      });
   }
 );
 
-module.exports = router;
+module.exports = Router;

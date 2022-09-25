@@ -1,6 +1,5 @@
 const mysql = require('../connector');
 const bcrypt = require('bcrypt');
-const gUniqueId = require('generate-unique-id');
 const timestamp = require('time-stamp');
 
 module.exports = {
@@ -16,9 +15,9 @@ module.exports = {
     mysql.query(findById, resFunc);
   },
   create: function (reqObj, reqFunc) {
-    const hashedPassword = bcrypt.hashSync(reqObj.password);
+    const hashedPassword = bcrypt.hashSync(reqObj.password, 8);
 
-    const create = `INSERT INTO akun (id_akun, id_pengguna, password, role, ditambah_oleh, diedit_oleh, create_at, update_at) VALUES ('${gUniqueId({ 'length': 20 })}', '${reqObj.id_pengguna}', '${hashedPassword}', '${reqObj.ditambah_oleh}', '', '${timestamp('HH:mm:YYYY-MM-DD')}', '')`;
+    const create = `INSERT INTO akun (id_akun, id_pengguna, password, role, ditambah_oleh, diedit_oleh, create_at, update_at) VALUES ('${reqObj.id_akun}', '${reqObj.id_pengguna}', '${hashedPassword}', '${reqObj.role}', '${reqObj.ditambah_oleh}', '', '${timestamp('HH:mm:YYYY-MM-DD')}', '')`;
   
     mysql.query(create, reqFunc);
   },

@@ -1,31 +1,30 @@
 const mysql = require('../connector');
 const timestamp = require('time-stamp');
-const gUniqueId = require('generate-unique-id');
 
 module.exports = {
-  findAll: function (response) {
-    const findAll = `SELECT * FROM menu`;
+  findAll: function (resFunc) {
+    const findAll = `SELECT * FROM menu ORDER BY create_at DESC`;
 
-    mysql.query(findAll, response);
+    mysql.query(findAll, resFunc);
   },
-  findById: function (request, response) {
-    const findById = `SELECT * FROM menu WHERE id_menu='${request.id_menu}'`;
+  findById: function (reqObj, resFunc) {
+    const findById = `SELECT * FROM menu WHERE id_menu='${reqObj.id_menu}'`;
 
-    mysql.query(findById, response);
+    mysql.query(findById, resFunc);
   },
-  create: function (request, response) {
-    const create = `INSERT INTO menu (id_menu, id_pengguna, nama_menu, jenis_menu, qty_menu, harga_menu, ditambah_oleh, diedit_oleh, create_at, update_at) VALUES ('${gUniqueId({ length: 20 })}', '${request.id_akun}', '${nama_menu}', '${request.jenis_menu}', '${request.qty_menu}', '${request.harga_menu}', '${request.ditambah_oleh}', '', '${timestamp('HH:mm:YYYY-MM-DD')}', '')`;
+  create: function (reqObj, resFunc) {
+    const create = `INSERT INTO menu (id_menu, id_master, nama_menu, jenis_menu, qty_menu, harga_menu, ditambah_oleh, diedit_oleh, create_at, update_at) VALUES ('${reqObj.id_menu}', '${reqObj.id_master}', '${reqObj.nama_menu}', '${reqObj.jenis_menu}', '${reqObj.qty_menu}', '${reqObj.harga_menu}', '${reqObj.ditambah_oleh}', '', '${timestamp('HH:mm:YYYY-MM-DD')}', '')`;
 
-    mysql.query(create, response);
+    mysql.query(create, resFunc);
   },
-  update: function (request, response) {
-    const update = `UPDATE menu SET nama_menu='${request.nama_menu}', jenis_menu='${request.jenis_menu}', qty_menu='${request.qty_menu}', harga_menu='${request.harga_menu}', diedit_oleh='${request.diedit_oleh}', update_at='${timestamp('HH:mm:YYYY-MM-DD')}'`;
+  update: function (reqObj, resFunc) {
+    const update = `UPDATE menu SET nama_menu='${reqObj.nama_menu}', jenis_menu='${reqObj.jenis_menu}', qty_menu='${reqObj.qty_menu}', harga_menu='${reqObj.harga_menu}', diedit_oleh='${reqObj.diedit_oleh}', update_at='${timestamp('HH:mm:YYYY-MM-DD')}'`;
 
-    mysql.query(update, response);
+    mysql.query(update, resFunc);
   },
-  delete: function (request, response) {
-    const remove = `DELETE FROM menu WHERE id_menu='${request.id_menu}'`;
+  delete: function (reqObj, resFunc) {
+    const remove = `DELETE FROM menu WHERE id_menu='${reqObj.id_menu}'`;
 
-    mysql.query(remove, response);
+    mysql.query(remove, resFunc);
   }
 }

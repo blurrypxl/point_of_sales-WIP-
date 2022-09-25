@@ -1,69 +1,117 @@
-const router = require('express').Router();
+const Router = require('express').Router();
+const GenerateId = require('generate-unique-id');
 const Master = require('../models/Master');
 const Auth = require('../models/Auth');
-// const validateToken = require('./validateController');
 
-const validateToken = function (req, res, next) {
-  Auth.validateToken({ 'token': req.headers['x-access-token'] }, function (err, decoded) {
-    if (err) return res.status(400).json({ 'status': 400, 'msg': 'Token Expired/Token Not Provided.', 'fullmsg': err });
+Router.get('/read',
+  Auth.validateToken,
+  function (req, res, next) {
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied!');
 
-    if (decoded.payload.role !== 'super-admin') return res.status(401).json({ 'status': 401, 'access': false, 'msg': 'Access Denied!' });
-  });
+      error.status = 401;
 
-  next();
-}
+      return next(error);
+    }
 
-router.get('/read-master',
-  validateToken,
-  function (req, res) {
     Master.findAll(function (err, data) {
-      if (err) return res.status(500).json({ 'status': 500, 'msg': err });
+      if (err) {
+        const error = new Error(err.message);
 
-      res.status(200).json({ 'status': 200, 'access': true, 'msg': data });
+        error.status = 500;
+
+        return next(error);
+      }
+
+      res.status(200).json({ 'status': 200, 'msg': data });
     });
   });
 
-router.get('/read-master/:id',
-  validateToken,
-  function (req, res) {
+Router.get('/read/:id',
+  Auth.validateToken,
+  function (req, res, next) {
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied');
+
+      error.status = 401;
+
+      return next(error);
+    }
+
     Master.findById({ 'id_master': req.params.id }, function (err, data) {
-      if (err) return res.status(500).json({ 'status': 500, 'msg': err });
+      if (err){
+        const error = new Error(err.message);
 
-      res.status(200).json({ 'status': 200, 'access': true, 'msg': data });
+        error.status = 500;
+  
+        return next(error);
+      }
+
+      res.status(200).json({ 'status': 200, 'msg': data });
     });
   });
 
-router.post('/create-master',
-  validateToken,
-  function (req, res) {
+Router.post('/create',
+  Auth.validateToken,
+  function (req, res, next) {
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied');
+
+      error.status = 401;
+
+      return next(error);
+    }
+
     const { nama_master, email_master, alamat_master, password, role } = req.body;
 
     Master.create({
+      'id_master': GenerateId({ length: 20 }),
       'nama_master': nama_master,
       'email_master': email_master,
       'alamat_master': alamat_master,
       'password': password,
       'role': role
-    }, function (err) {
-      if (err) return res.status(500).json({ 'status': 500, 'msg': err });
+    },
+      function (err) {
+        if (err) {
+          const error = new Error(err.message);
 
-      res.status(200).json({ 'status': 200, 'access': true, 'msg': 'Data master berhasil ditambah.' });
-    });
+          error.status = 500;
+    
+          return next(error);
+        }
+
+        res.status(200).json({ 'status': 200, 'msg': 'Data master berhasil ditambah.' });
+      });
   });
 
-router.put('/update-master/:id',
-  validateToken,
+Router.put('/update/:id',
+  Auth.validateToken,
   function (req, res, next) {
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied');
+
+      error.status = 401;
+
+      return next(error);
+    }
+
     // Get data master by id
     Master.findById({ 'id_master': req.params.id }, function (err, data) {
-      if (err) return res.status(500).json({ 'status': 500, 'msg': err });
+      if (err) {
+        const error = new Error(err.message);
+
+        error.status = 500;
+  
+        return next(error);
+      }
 
       res.locals.dataMaster = data[0];
-
-      next();
     });
+
+    next();
   },
-  function (req, res) {
+  function (req, res, next) {
     // Update data master
     const dataMaster = res.locals.dataMaster;
 
@@ -75,10 +123,16 @@ router.put('/update-master/:id',
       'alamat_master': alamat_master === '' ? dataMaster.alamat_master : alamat_master,
       'password': password === '' ? dataMaster.password : password
     }, function (err) {
-      if (err) return res.status(500).json({ 'status': 500, 'msg': err });
+      if (err) {
+        const error = new Error(err.message);
 
-      res.status(200).json({ 'status': 200, 'access': true, 'msg': 'Data master berhasil diupdate.' });
+        error.status = 500;
+  
+        return next(error);
+      }
+
+      res.status(200).json({ 'status': 200, 'msg': 'Data master berhasil diupdate.' });
     });
   });
 
-module.exports = router;
+module.exports = Router;

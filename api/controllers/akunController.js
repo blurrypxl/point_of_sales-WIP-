@@ -1,72 +1,135 @@
-const router = require('express').Router();
+const Router = require('express').Router();
+const GenerateId = require('generate-unique-id');
 const Akun = require('../models/Akun');
 const Auth = require('../models/Auth');
 
-router.get('/read',
+Router.get('/read',
   Auth.validateToken,
-  function (req, res) {
-    if (res.locals.user.role !== 'super-admin') return res.status(401).json({ 'status': 401, 'msg': 'Access Denied!' });
+  function (req, res, next) {
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied!');
+
+      error.status = 401;
+
+      return next(error);
+    }
 
     Akun.findAll(function (err, data) {
-      if (err) return res.status(500).json({ 'status': 500, 'msg': err.message });
+      if (err) {
+        const error = new Error(err.message);
+
+        error.status = 500;
+
+        return next(error);
+      }
 
       res.status(200).json({ 'status': 200, 'access': true, 'msg': data });
     });
   });
 
-router.get('/read/:id',
+Router.get('/read/:id',
   Auth.validateToken,
-  function (req, res) {
-    if (res.locals.user.role !== 'super-admin') return res.status(401).json({ 'status': 401, 'msg': 'Access Denied!' });
+  function (req, res, next) {
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied!');
+
+      error.status = 401;
+
+      return next(error);
+    }
 
     Akun.findById({ 'id_akun': req.params.id }, function (err, data) {
-      if (err) return res.status(500).json({ 'status': 500, 'msg': err.message });
+      if (err) {
+        const error = new Error(err.message);
 
-      res.status(200).json({ 'status': 200, 'access': true, 'msg': data });
+        error.status = 500;
+  
+        return next(error);
+      }
+
+      res.status(200).json({ 'status': 200, 'msg': data });
     });
   });
 
-router.post('/create',
+Router.post('/create',
   Auth.validateToken,
-  function (req, res) {
-    if (res.locals.user.role !== 'super-admin') return res.status(401).json({ 'status': 401, 'msg': 'Access Denied!!' });
+  function (req, res, next) {
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied!');
+
+      error.status = 401;
+
+      return next(error);
+    }
 
     Akun.create({
+      'id_akun': GenerateId({ length: 20 }),
       'id_pengguna': req.body.id_pengguna,
       'password': req.body.password,
-      'ditambah_oleh': req.body.ditambah_oleh
+      'role': req.body.role,
+      'ditambah_oleh': res.locals.user.nama_master
     },
       function (err) {
-        if (err) return res.status(500).json({ 'status': 500, 'msg': err.message });
+        if (err) {
+          const error = new Error(err.message);
 
-        res.status(200).json({ 'status': 200, 'access': true, 'msg': 'Data akun berhasil ditambahkan.' });
+          error.status = 500;
+    
+          return next(error);
+        }
+
+        res.status(200).json({ 'status': 200, 'msg': 'Data akun berhasil ditambahkan.' });
       });
   });
 
-router.put('/update/:id',
+Router.put('/update/:id',
   Auth.validateToken,
-  function (req, res) {
-    if (res.locals.user.role !== 'super-admin') return res.status(401).json({ 'status': 401, 'msg': 'Access Denied!' });
+  function (req, res, next) {
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied!');
+
+      error.status = 401;
+
+      return next(error);
+    }
 
     Akun.update({ 'password': req.body.password },
       function (err) {
-        if (err) return res.status(500).json({ 'status': 500, 'msg': err.message });
+        if (err) {
+          const error = new Error(err.message);
 
-        res.status(200).json({ 'status': 200, 'access': true, 'msg': 'Data akun berhasil diupdate.' });
+          error.status = 500;
+    
+          return next(error);
+        }
+
+        res.status(200).json({ 'status': 200, 'msg': 'Data akun berhasil diupdate.' });
       });
   });
 
-router.delete('/delete/:id',
+Router.delete('/delete/:id',
   Auth.validateToken,
-  function (req, res) {
-    if (res.locals.user.role !== 'super-admin') return res.status(401).json({ 'status': 401, 'msg': 'Access Denied!' });
+  function (req, res, next) {
+    if (res.locals.user.role !== 'super-admin') {
+      const error = new Error('Access Denied!');
 
-    Akun.remove({ 'id_akun': req.params.id },
+      error.status = 401;
+
+      return next(error);
+    }
+
+    Akun.delete({ 'id_akun': req.params.id },
       function (err) {
-        if (err) return res.status(500).json({ 'status': 500, 'msg': err });
+        if (err) {
+          const error = new Error('Access Denied!');
 
-        res.status(200).json({ 'status': 200, 'access': true, 'msg': 'Data akun berhasil dihapus.' });
+          error.status = 401;
+    
+          return next(error);
+        }
+
+        res.status(200).json({ 'status': 200, 'msg': 'Data akun berhasil dihapus.' });
       });
   });
 
-module.exports = router;
+module.exports = Router;
